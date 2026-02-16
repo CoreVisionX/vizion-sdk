@@ -30,7 +30,7 @@ class Instance(BaseModel):
             if i % 2 == 1:
                 flat[pos : pos + length] = True
             pos += length
-        return flat.reshape((self.mask_height, self.mask_width))
+        return flat.reshape((self.mask_height, self.mask_width), order="F")
 
 
 class Detection(BaseModel):
