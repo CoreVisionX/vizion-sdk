@@ -1,6 +1,6 @@
 # Vizion SDK
 
-Python SDK for [Vizion.fast](https://www.vizion.fast) — real-time GPU segmentation over WebSocket.
+Python SDK for [Vizion.fast](https://www.vizion.fast) — real-time GPU inference over WebSocket.
 
 ## Install
 
@@ -49,6 +49,24 @@ with VizionClient(os.environ["VIZION_API_KEY"]) as client:
 # session is automatically closed
 ```
 
+## Depth Estimation
+
+Use `model="depth-anything-3"` for monocular metric depth:
+
+```python
+client = VizionClient(os.environ["VIZION_API_KEY"], model="depth-anything-3")
+client.connect()
+
+result = client.depth(jpeg_bytes)
+
+print(f"Depth range: {result.depth_min:.2f} – {result.depth_max:.2f} metres")
+
+# Decode to (H, W) float32 numpy array in metres
+depth = result.decode_depth()
+```
+
+A live webcam demo is in [`examples/depth_webcam.py`](examples/depth_webcam.py).
+
 ## Decoding Masks
 
 Each `Instance` has a `decode_mask()` method that returns a `(H, W)` boolean numpy array (requires the `[cv]` extra):
@@ -91,6 +109,7 @@ All methods return typed [Pydantic](https://docs.pydantic.dev) models with full 
 | Method | Return Type |
 |---|---|
 | `segment()` | `SegmentationResult` |
+| `depth()` | `DepthResult` |
 | `models()` | `ModelsResponse` |
 | `sessions()` | `list[Session]` |
 
@@ -99,13 +118,14 @@ Key models:
 - **`SegmentationResult`** — `results: list[Detection]`, plus timing fields (`decode_ms`, `vision_encode_ms`, `text_encode_ms`, `decode_segment_ms`)
 - **`Detection`** — `prompt: str`, `instances: list[Instance]`
 - **`Instance`** — `x1`, `y1`, `x2`, `y2`, `confidence`, `mask_rle`, `mask_height`, `mask_width`, plus `decode_mask()`
+- **`DepthResult`** — `depth_png_b64`, `depth_min`, `depth_max`, `height`, `width`, plus timing fields and `decode_depth()`
 - **`ModelsResponse`** — `models: list[ModelInfo]`, `cost_per_second_cents: float`
 - **`Session`** — `id`, `model`, `status`, `started_at`, `ended_at`, `duration_seconds`, `credits_used`
 
 All models can be imported directly:
 
 ```python
-from vizion import SegmentationResult, Detection, Instance, ModelsResponse, Session
+from vizion import SegmentationResult, Detection, Instance, DepthResult, ModelsResponse, Session
 ```
 
 ## License
