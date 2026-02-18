@@ -65,6 +65,42 @@ class ModelsResponse(BaseModel):
     models: list[ModelInfo]
 
 
+class DepthResult(BaseModel):
+    """Full response from a ``depth()`` call.
+
+    The depth map is returned as a base64-encoded uint16 PNG.  Use
+    :meth:`decode_depth` to convert it to a float32 numpy array with
+    metric depth values (in metres).
+    """
+
+    depth_png_b64: str
+    depth_min: float
+    depth_max: float
+    height: int
+    width: int
+    decode_ms: float
+    inference_ms: float
+    encode_ms: float
+
+    def decode_depth(self) -> "np.ndarray":
+        """Decode the PNG into a ``(H, W)`` float32 depth map in metres.
+
+        Requires numpy and Pillow (install with ``pip install vizion[cv]``).
+        """
+        import base64
+        import io
+
+        import numpy as np
+        from PIL import Image
+
+        png_bytes = base64.b64decode(self.depth_png_b64)
+        img = Image.open(io.BytesIO(png_bytes))
+        depth_u16 = np.array(img, dtype=np.float32)
+        # Reverse uint16 normalisation → metric depth
+        depth = depth_u16 / 65535.0 * (self.depth_max - self.depth_min) + self.depth_min
+        return depth
+
+
 class Session(BaseModel):
     """A session record from the ``sessions()`` endpoint."""
 

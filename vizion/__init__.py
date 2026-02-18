@@ -1,7 +1,8 @@
-"""Vizion SDK — real-time GPU segmentation over WebSocket."""
+"""Vizion SDK — real-time GPU inference over WebSocket."""
 
 from vizion.client import VizionClient
 from vizion.models import (
+    DepthResult,
     Detection,
     Instance,
     ModelInfo,
@@ -12,6 +13,7 @@ from vizion.models import (
 
 __all__ = [
     "VizionClient",
+    "DepthResult",
     "SegmentationResult",
     "Detection",
     "Instance",

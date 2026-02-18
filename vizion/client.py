@@ -12,7 +12,7 @@ from typing import Any
 import requests
 import websockets.sync.client as ws_client
 
-from vizion.models import ModelsResponse, SegmentationResult, Session
+from vizion.models import DepthResult, ModelsResponse, SegmentationResult, Session
 
 DEFAULT_API_URL = "https://www.vizion.fast"
 
@@ -174,6 +174,27 @@ class VizionClient:
         message = struct.pack("<I", len(header)) + header + jpeg_bytes
         self._ws.send(message)
         return SegmentationResult.model_validate_json(self._ws.recv())
+
+    def depth(self, jpeg_bytes: bytes) -> DepthResult:
+        """Send a JPEG frame and return a metric depth map.
+
+        The depth server expects raw JPEG bytes (no header framing).
+
+        Args:
+            jpeg_bytes: Raw JPEG image bytes.
+
+        Returns:
+            A :class:`~vizion.models.DepthResult` with the base64-encoded
+            uint16 PNG depth map and server-side timing.
+
+        Raises:
+            RuntimeError: If :meth:`connect` has not been called.
+        """
+        if self._ws is None:
+            raise RuntimeError("Not connected — call connect() first")
+
+        self._ws.send(jpeg_bytes)
+        return DepthResult.model_validate_json(self._ws.recv())
 
     def close(self) -> None:
         """Shut down the GPU worker and close the WebSocket.
